@@ -1,167 +1,3 @@
-# MealMind Backend Documentation
-
-## Directory Structure
-
-```
-backend/
-├── app/                           # Main Flask application directory
-│   ├── __init__.py                # Flask app initialization
-│   ├── ml/                        # Machine learning modules
-│   │   ├── __init__.py
-│   │   ├── advanced_recommendation_engine.py
-│   │   ├── diet_progress_analyzer.py
-│   │   ├── food_database.py
-│   │   ├── model_serializer.py
-│   │   ├── recommendation_engine.py
-│   │   ├── tensorflow_models.py
-│   │   └── tensorflow_ncf_lstm_example.py
-│   ├── models/                    # SQLAlchemy database models
-│   │   ├── __init__.py
-│   │   ├── food.py
-│   │   ├── recommendation.py
-│   │   └── user.py
-│   ├── routes/                    # API endpoint definitions
-│   │   ├── __init__.py
-│   │   ├── activities.py
-│   │   ├── auth.py
-│   │   ├── profile.py
-│   │   ├── progress.py
-│   │   ├── recommendations.py
-│   │   └── user.py
-│   └── utils/                     # Common utilities
-│       └── __init__.py
-│
-├── config.py                      # Application configuration
-├── data/                          # Data for models and database
-├── migrations/                    # Flask-Migrate database migrations
-├── models/                        # Trained machine learning models
-├── scripts/                       # Utility and initialization scripts
-├── Dockerfile                     # Docker configuration
-├── requirements.txt               # Python dependencies
-├── run.py                         # Main application runner
-└── various other utility files
-```
-
-## API Structure
-
-### Authentication (`/api/auth`)
-- `POST /signup` - Register a new user
-- `POST /login` - Login user and get JWT token
-- `GET /me` - Get current user information
-
-### User Profile (`/api/profile`)
-- `POST /setup` - Create new user profile
-- `GET /get` - Get user profile
-- `PUT /update` - Update user profile
-- `POST /reset` - Reset user profile
-
-### Diet Recommendations (`/api/recommendations`)
-- `GET /today` - Get today's food and activity recommendations
-- `POST /regenerate/<meal_type>` - Regenerate recommendation for specific meal type
-- `POST /checkin` - Daily check-in to track diet adherence
-- `GET /history` - Get recommendation history
-- `GET /month/<year>/<month>` - Get recommendations for specific month
-- `GET /day/<date_str>` - Get recommendations for specific date
-- `POST /generate_for_date` - Generate recommendations for specific date
-- `POST /generate_month_ahead` - Generate recommendations for one month ahead
-
-### Diet Progress (`/api/progress`)
-- `GET /analysis` - Get comprehensive diet progress analysis
-- `POST /weight/record` - Record new weight measurement
-- `GET /nutritional-balance` - Get nutritional balance analysis
-- `GET /adherence` - Get diet plan adherence analysis
-- `GET /calorie-adjustment` - Get calorie adjustment suggestions
-
-### Activities (`/api/activities`)
-- `GET /list` - Get list of available physical activities
-
-### User (`/api/user`)
-- `GET /me` - Get user information
-- `GET /stats` - Get user statistics
-
-## Authentication Implementation
-
-### JWT Protection
-
-Most endpoints are protected with JWT using the `@jwt_required()` decorator, ensuring only authenticated users can access them. JWT tokens are created during login and then sent in the Authorization header for subsequent requests.
-
-### Example Login Implementation
-
-```python
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    try:
-        data = request.get_json()
-        
-        if not data.get('email') or not data.get('password'):
-            return jsonify({'error': 'Missing email or password'}), 400
-        
-        user = User.query.filter_by(email=data['email']).first()
-        
-        if not user:
-            return jsonify({'error': 'Invalid credentials'}), 401
-            
-        if user and user.check_password(data['password']):
-            # Convert user ID to string to avoid JWT subject type errors
-            access_token = create_access_token(identity=str(user.id))
-            
-            # Check if user has profile
-            has_profile = UserProfile.query.filter_by(user_id=user.id).first() is not None
-            
-            return jsonify({
-                'access_token': access_token,
-                'user': user.to_dict(),
-                'has_profile': has_profile
-            }), 200
-        
-        return jsonify({'error': 'Invalid credentials'}), 401
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-```
-
-### Example Protected Endpoint
-
-```python
-@profile_bp.route('/get', methods=['GET'])
-@jwt_required()  # Decorator to protect endpoint
-def get_profile():
-    try:
-        # Get user ID from JWT token
-        user_id = get_jwt_identity()
-        
-        # Access profile data based on user_id
-        profile = UserProfile.query.filter_by(user_id=user_id).first()
-        
-        if not profile:
-            return jsonify({'error': 'Profile not found'}), 404
-        
-        return jsonify({'profile': profile.to_dict()}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-```
-
-## Blueprint Registration
-
-```python
-# Import blueprints
-from app.routes.auth import auth_bp
-from app.routes.profile import profile_bp
-from app.routes.recommendations import recommendations_bp
-from app.routes.activities import activities_bp
-from app.routes.user import user_bp
-from app.routes.progress import progress_bp
-
-# Register blueprints
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(profile_bp, url_prefix='/api/profile')
-app.register_blueprint(recommendations_bp, url_prefix='/api/recommendations')
-app.register_blueprint(activities_bp, url_prefix='/api/activities')
-app.register_blueprint(user_bp, url_prefix='/api/user')
-app.register_blueprint(progress_bp, url_prefix='/api/progress')
-``` 
-
 # 🍽️ MealMind - Aplikasi Perencanaan Diet Cerdas
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
@@ -264,22 +100,172 @@ npm run dev
 
 ## 🧪 Struktur Proyek
 
+### Struktur Backend
+
 ```
-meal-mind-project/
-├── backend/
-│   ├── app/
-│   │   ├── models/       # Model database
-│   │   ├── routes/       # API endpoints
-│   │   └── ml/           # Algoritma machine learning
-│   ├── migrations/       # Database migrations
-│   └── instance/         # Instance database
-├── frontend/
-│   ├── public/           # Aset statis
-│   └── src/
-│       ├── components/   # Komponen React
-│       ├── hooks/        # Custom hooks
-│       └── pages/        # Halaman aplikasi
-└── docs/                 # Dokumentasi
+backend/
+├── app/                           # Direktori utama aplikasi Flask
+│   ├── __init__.py                # Inisialisasi aplikasi Flask
+│   ├── ml/                        # Modul machine learning
+│   │   ├── __init__.py
+│   │   ├── advanced_recommendation_engine.py
+│   │   ├── diet_progress_analyzer.py
+│   │   ├── food_database.py
+│   │   ├── model_serializer.py
+│   │   ├── recommendation_engine.py
+│   │   ├── tensorflow_models.py
+│   │   └── tensorflow_ncf_lstm_example.py
+│   ├── models/                    # Model database SQLAlchemy
+│   │   ├── __init__.py
+│   │   ├── food.py
+│   │   ├── recommendation.py
+│   │   └── user.py
+│   ├── routes/                    # Definisi endpoint API
+│   │   ├── __init__.py
+│   │   ├── activities.py
+│   │   ├── auth.py
+│   │   ├── profile.py
+│   │   ├── progress.py
+│   │   ├── recommendations.py
+│   │   └── user.py
+│   └── utils/                     # Utilitas umum
+│       └── __init__.py
+│
+├── config.py                      # Konfigurasi aplikasi
+├── data/                          # Data untuk model dan database
+├── migrations/                    # Migrasi database Flask-Migrate
+├── models/                        # Model machine learning terlatih
+├── scripts/                       # Script utilitas dan inisialisasi
+├── Dockerfile                     # Konfigurasi Docker
+├── requirements.txt               # Dependensi Python
+├── run.py                         # Script utama untuk menjalankan aplikasi
+└── berbagai file utilitas lainnya
+```
+
+### Struktur Frontend
+
+```
+frontend/
+├── public/                        # Aset statis publik
+├── src/                           # Kode sumber utama
+│   ├── assets/                    # Aset seperti gambar, font, dll
+│   ├── components/                # Komponen React yang dapat digunakan kembali
+│   ├── context/                   # Context API untuk state management
+│   ├── pages/                     # Komponen halaman utama
+│   ├── services/                  # Layanan API dan integrasi
+│   ├── utils/                     # Fungsi utilitas dan helper
+│   ├── views/                     # Komponen view alternatif
+│   ├── App.jsx                    # Komponen utama aplikasi
+│   ├── App.css                    # Styling untuk komponen App
+│   ├── index.css                  # Styling global
+│   └── main.jsx                   # Entry point aplikasi
+│
+├── Dockerfile                     # Konfigurasi Docker untuk frontend
+├── index.html                     # HTML template utama
+├── package.json                   # Dependensi dan script npm
+├── tailwind.config.js             # Konfigurasi Tailwind CSS
+├── vite.config.js                 # Konfigurasi Vite
+└── berbagai file konfigurasi lainnya
+```
+
+## API Structure
+
+### Authentication (`/api/auth`)
+- `POST /signup` - Register a new user
+- `POST /login` - Login user and get JWT token
+- `GET /me` - Get current user information
+
+### User Profile (`/api/profile`)
+- `POST /setup` - Create new user profile
+- `GET /get` - Get user profile
+- `PUT /update` - Update user profile
+- `POST /reset` - Reset user profile
+
+### Diet Recommendations (`/api/recommendations`)
+- `GET /today` - Get today's food and activity recommendations
+- `POST /regenerate/<meal_type>` - Regenerate recommendation for specific meal type
+- `POST /checkin` - Daily check-in to track diet adherence
+- `GET /history` - Get recommendation history
+- `GET /month/<year>/<month>` - Get recommendations for specific month
+- `GET /day/<date_str>` - Get recommendations for specific date
+- `POST /generate_for_date` - Generate recommendations for specific date
+- `POST /generate_month_ahead` - Generate recommendations for one month ahead
+
+### Diet Progress (`/api/progress`)
+- `GET /analysis` - Get comprehensive diet progress analysis
+- `POST /weight/record` - Record new weight measurement
+- `GET /nutritional-balance` - Get nutritional balance analysis
+- `GET /adherence` - Get diet plan adherence analysis
+- `GET /calorie-adjustment` - Get calorie adjustment suggestions
+
+### Activities (`/api/activities`)
+- `GET /list` - Get list of available physical activities
+
+### User (`/api/user`)
+- `GET /me` - Get user information
+- `GET /stats` - Get user statistics
+
+## Authentication Implementation
+
+### JWT Protection
+
+Most endpoints are protected with JWT using the `@jwt_required()` decorator, ensuring only authenticated users can access them. JWT tokens are created during login and then sent in the Authorization header for subsequent requests.
+
+### Example Login Implementation
+
+```python
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        
+        if not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Missing email or password'}), 400
+        
+        user = User.query.filter_by(email=data['email']).first()
+        
+        if not user:
+            return jsonify({'error': 'Invalid credentials'}), 401
+            
+        if user and user.check_password(data['password']):
+            # Convert user ID to string to avoid JWT subject type errors
+            access_token = create_access_token(identity=str(user.id))
+            
+            # Check if user has profile
+            has_profile = UserProfile.query.filter_by(user_id=user.id).first() is not None
+            
+            return jsonify({
+                'access_token': access_token,
+                'user': user.to_dict(),
+                'has_profile': has_profile
+            }), 200
+        
+        return jsonify({'error': 'Invalid credentials'}), 401
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+```
+
+### Example Protected Endpoint
+
+```python
+@profile_bp.route('/get', methods=['GET'])
+@jwt_required()  # Decorator to protect endpoint
+def get_profile():
+    try:
+        # Get user ID from JWT token
+        user_id = get_jwt_identity()
+        
+        # Access profile data based on user_id
+        profile = UserProfile.query.filter_by(user_id=user_id).first()
+        
+        if not profile:
+            return jsonify({'error': 'Profile not found'}), 404
+        
+        return jsonify({'profile': profile.to_dict()}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 ```
 
 ## 🤝 Kontribusi
@@ -307,4 +293,3 @@ Link Proyek: [https://github.com/yourusername/meal-mind-project](https://github.
 <p align="center">
   Dibuat dengan ❤️ oleh Tim MealMind
 </p>
-# Meal-Mind
